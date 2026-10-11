@@ -253,8 +253,8 @@
     already: 'この会員さまはすでに確認済みです。',
     limit: '確認の回数が上限に達しました。明日もう一度お試しいただくか、受付スタッフまでお声がけください。',
     invalid: 'お名前（ひらがな）と生年月日を正しく入力してください。',
-    network: '通信に失敗しました。電波の良い場所で、もう一度お試しください。',
-    error: 'エラーが発生しました。時間をおいてもう一度お試しいただくか、受付スタッフまでお声がけください。',
+    network: 'ただいまアクセスが集中しているか、通信が不安定です。<br>1〜2分ほど時間をおいて、もう一度お試しください。',
+    error: 'ただいま混み合っているか、エラーが発生しました。<br>1〜2分ほど時間をおいてもう一度お試しいただくか、受付スタッフまでお声がけください。',
     empty: '確認できた会員がまだいません。お名前と生年月日を入力して「確認する」を押してください。',
     outside: 'この画面はLINEアプリから開いてください。<br>公式LINEのメニュー左上「新システムID確認」からお進みください。',
     noToken: 'LINEの情報を取得できませんでした。画面を閉じて、もう一度開いてください。',
@@ -372,14 +372,30 @@
   }
 
   // ---- Apps Scriptとの通信 ----
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  // 混雑などで応答が返らなかったときは、少し待って自動でやり直す（送信を伴う complete はやり直さない）
   async function api(action, payload = {}) {
-    const res = await fetch(GAS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(Object.assign({ action, idToken: state.idToken }, payload)),
-    });
-    if (!res.ok) throw new Error('http');
-    const data = await res.json();
+    const retries = action === 'complete' ? 0 : 2;
+    let data = null;
+    for (let i = 0; i <= retries && !data; i++) {
+      if (i > 0) {
+        if (action === 'verify') $('verifyBtn').textContent = '混み合っています。お待ちください…';
+        await sleep(1500 * i + Math.floor(Math.random() * 1000));
+      }
+      try {
+        const res = await fetch(GAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(Object.assign({ action, idToken: state.idToken }, payload)),
+        });
+        if (!res.ok) throw new Error('http');
+        data = await res.json();
+      } catch (err) {
+        data = null;
+      }
+    }
+    if (!data) throw new Error('busy');
     if (data.result === 'auth_error') {
       // IDトークンの期限切れなど：1回だけ開き直す
       if (!sessionStorage.getItem('tag_reauth')) {
