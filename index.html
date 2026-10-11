@@ -131,6 +131,22 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .foot { text-align: center; color: var(--sub); font-size: 14px; margin-top: 20px; }
+  .foot p { margin: 0; }
+  .foot .tel {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 10px 20px;
+    border: 2px solid var(--green);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--green-dark);
+    font-size: 18px;
+    font-weight: 700;
+    text-decoration: none;
+    letter-spacing: .03em;
+  }
+  .foot .tel:active { background: var(--green-tint); }
+  .foot .tel-sub { margin-top: 6px; font-size: 13px; }
 </style>
 </head>
 <body>
@@ -212,7 +228,11 @@
     <button id="closeBtn" type="button" class="btn primary">トークに戻る</button>
   </section>
 
-  <p class="foot">お困りの際は、受付スタッフまでお声がけください</p>
+  <div class="foot">
+    <p>お困りの際は、受付スタッフまでお声がけいただくか、お電話でお問い合わせください</p>
+    <a class="tel" href="tel:0899094343">📞 089-909-4343</a>
+    <p class="tel-sub">テニスアリーナガーデン松山</p>
+  </div>
 </main>
 
 <script>
